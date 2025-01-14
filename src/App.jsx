@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import CustomerComponent from './components/CustomerComponent'
 import CustomerService from './services/CustomerService';
+import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css'
 
 function App() {
