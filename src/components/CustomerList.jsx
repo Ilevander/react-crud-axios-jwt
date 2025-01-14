@@ -1,4 +1,4 @@
-import React from "react";
+import PropTypes from "prop-types";
 
 const CustomerList = ({ customers, editCustomer, deleteCustomer }) => {
   return (
@@ -13,11 +13,11 @@ const CustomerList = ({ customers, editCustomer, deleteCustomer }) => {
           <th scope="col">Option</th>
         </tr>
       </thead>
-      {customers.map((customer, index) => {
-        return (
-          <tbody key={customer.id}>
-            <tr>
-            <td>{customer.id}</td>
+      <tbody>
+        {customers && customers.length > 0 ? (
+          customers.map((customer) => (
+            <tr key={customer.id}>
+              <td>{customer.id}</td>
               <td>{customer.firstname}</td>
               <td>{customer.lastname}</td>
               <td>{customer.identityRef}</td>
@@ -39,11 +39,32 @@ const CustomerList = ({ customers, editCustomer, deleteCustomer }) => {
                 </button>
               </td>
             </tr>
-          </tbody>
-        );
-      })}
+          ))
+        ) : (
+          <tr>
+            <td colSpan="6" className="text-center">
+              No customers available.
+            </td>
+          </tr>
+        )}
+      </tbody>
     </table>
   );
+};
+
+// PropTypes Validation
+CustomerList.propTypes = {
+  customers: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number.isRequired,
+      firstname: PropTypes.string.isRequired,
+      lastname: PropTypes.string.isRequired,
+      identityRef: PropTypes.string.isRequired,
+      username: PropTypes.string.isRequired,
+    })
+  ).isRequired,
+  editCustomer: PropTypes.func.isRequired,
+  deleteCustomer: PropTypes.func.isRequired,
 };
 
 export default CustomerList;

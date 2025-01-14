@@ -1,9 +1,10 @@
 import { useState } from "react";
+import PropTypes from "prop-types";
 import CustomerList from "./CustomerList";
 import CustomerService from "../services/CustomerService";
 
 const CustomerComponent = ({ load, customers }) => {
-  /* state definition  */
+  // State Definitions
   const [id, setId] = useState("");
   const [identityRef, setIdentityRef] = useState("");
   const [firstname, setFirstname] = useState("");
@@ -12,93 +13,100 @@ const CustomerComponent = ({ load, customers }) => {
   const [messageInfo, setMessageInfo] = useState("");
   const [messageError, setMessageError] = useState("");
 
-  async function save(event) {
+  // Save or Update Customer
+  const save = async (event) => {
     event.preventDefault();
-    if (id) {
-      await CustomerService.put("/update/" + identityRef, {
-        lastname: lastname,
-        firstname: firstname,
-        identityRef: identityRef,
-        username: username,
-      }).then((result) => setMessageInfo("Customer updated with success"));
-    } else {
-      await CustomerService.post("/create", {
-        firstname: firstname,
-        lastname: lastname,
-        identityRef: identityRef,
-        username: username,
-      }).then((result) => setMessageInfo("Customer added with success"));
+
+    try {
+      if (id) {
+        await CustomerService.put(`/update/${identityRef}`, {
+          lastname,
+          firstname,
+          identityRef,
+          username,
+        });
+        setMessageInfo("Customer updated successfully!");
+      } else {
+        await CustomerService.post("/create", {
+          firstname,
+          lastname,
+          identityRef,
+          username,
+        });
+        setMessageInfo("Customer added successfully!");
+      }
+
+      // Reset form fields
+      resetForm();
+      load();
+    } catch (error) {
+      console.error("Error saving customer:", error);
+      setMessageError("Failed to save customer. Please try again.");
     }
-    // reset state
+  };
+
+  // Edit Customer
+  const editCustomer = (customer) => {
+    setId(customer.id);
+    setFirstname(customer.firstname);
+    setLastname(customer.lastname);
+    setIdentityRef(customer.identityRef);
+    setUsername(customer.username);
+    setMessageInfo("");
+    setMessageError("");
+  };
+
+  // Delete Customer
+  const deleteCustomer = async (id) => {
+    setMessageInfo("");
+    setMessageError("");
+    try {
+      const result = await CustomerService.delete(`/delete/${id}`);
+      setMessageInfo(result.data || "Customer deleted successfully!");
+      load();
+    } catch (error) {
+      console.error("Error deleting customer:", error);
+      setMessageError("Failed to delete customer. Please try again.");
+    }
+  };
+
+  // Reset Form
+  const resetForm = () => {
     setId("");
     setFirstname("");
     setLastname("");
     setIdentityRef("");
     setUsername("");
-    load();
-    setMessageError("");
-  }
+  };
 
-  async function editCustomer(customers) {
-    setFirstname(customers.firstname);
-    setLastname(customers.lastname);
-    setIdentityRef(customers.identityRef);
-    setUsername(customers.username);
-    setId(customers.id);
-    setMessageError("");
-    setMessageInfo("");
-  }
-
-  async function deleteCustomer(id) {
-    setMessageError("");
-    setMessageInfo("");
-    await CustomerService.delete("/delete/" + id)
-      .then((result) => {
-        setMessageInfo(result.data);
-      })
-      .catch((e) => {
-        console.log(e);
-        setMessageError(e.response.data.message);
-      });
-    load();
-  }
-
-  /* end handlers */
-
-  /* jsx */
+  // JSX
   return (
     <div className="container mt-4">
-      <div className="container">
-        {messageError && (
-          <div className="alert alert-danger" role="alert">
-            {messageError}
-          </div>
-        )}
-        {messageInfo && (
-          <div className="alert alert-success" role="alert">
-            {messageInfo}
-          </div>
-        )}
-      </div>
+      {/* Alerts */}
+      {messageError && (
+        <div className="alert alert-danger" role="alert">
+          {messageError}
+        </div>
+      )}
+      {messageInfo && (
+        <div className="alert alert-success" role="alert">
+          {messageInfo}
+        </div>
+      )}
 
-      <form>
+      {/* Customer Form */}
+      <form onSubmit={save}>
         <div className="form-group my-2">
-          <input
-            hidden
-            type="text"
-            className="form-control"
-            value={id}
-            onChange={(e) => setId(e.target.value)}
-          />
+          <input hidden type="text" value={id} onChange={(e) => setId(e.target.value)} />
           <label>Lastname</label>
           <input
             type="text"
             className="form-control"
             value={lastname}
             onChange={(e) => setLastname(e.target.value)}
+            required
           />
         </div>
-
         <div className="form-group mb-2">
           <label>Firstname</label>
           <input
@@ -106,39 +114,35 @@ const CustomerComponent = ({ load, customers }) => {
             className="form-control"
             value={firstname}
             onChange={(e) => setFirstname(e.target.value)}
+            required
           />
         </div>
-
-        <div className="row">
-          <div className="col-4">
-            <label>Identity Ref</label>
-            <input
-              type="text"
-              className="form-control"
-              value={identityRef}
-              onChange={(e) => setIdentityRef(e.target.value)}
-            />
-          </div>
+        <div className="form-group mb-2">
+          <label>Identity Ref</label>
+          <input
+            type="text"
+            className="form-control"
+            value={identityRef}
+            onChange={(e) => setIdentityRef(e.target.value)}
+            required
+          />
         </div>
-
-        <div className="row">
-          <div className="col-4">
-            <label>Username</label>
-            <input
-              type="text"
-              className="form-control"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
-          </div>
+        <div className="form-group mb-2">
+          <label>Username</label>
+          <input
+            type="text"
+            className="form-control"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
         </div>
-
-        <div>
-          <button className="btn btn-primary m-4" onClick={save}>
-            Save
-          </button>
-        </div>
+        <button type="submit" className="btn btn-primary mt-3">
+          Save
+        </button>
       </form>
+
+      {/* Customer List */}
       <CustomerList
         customers={customers}
         editCustomer={editCustomer}
@@ -146,6 +150,20 @@ const CustomerComponent = ({ load, customers }) => {
       />
     </div>
   );
+};
+
+// PropTypes Validation
+CustomerComponent.propTypes = {
+  load: PropTypes.func.isRequired,
+  customers: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number,
+      firstname: PropTypes.string,
+      lastname: PropTypes.string,
+      identityRef: PropTypes.string,
+      username: PropTypes.string,
+    })
+  ).isRequired,
 };
 
 export default CustomerComponent;
